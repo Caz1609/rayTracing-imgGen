@@ -3,9 +3,8 @@
 #include "stb_image/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
-#include <cassert>
 
-#define FP 1
+#define FP 10
 
 void test_write_img(Img& i1){
     int y=0;
@@ -37,7 +36,7 @@ void test_plane_img(Img& i1, Plane& p){
    bool f;
    for(int i = 0; i < i1.h; i++){
       for(int j = 0; j < i1.w; j++){
-         if(f=p.checkMeet(Ray(i1.w/2-i, i1.h/2-j, FP))){
+         if(f=p.checkMeet(Ray((double)j - (double)i1.w/2, (double)i1.h/2-(double)i, FP))){
             i1.p[t] = p.col[0];
             i1.p[t+1] = p.col[1];
             i1.p[t+2] = p.col[2];
@@ -65,8 +64,7 @@ Ray Ray::operator-(const Ray r)const {
 }
 
 Ray Ray::operator*(const Ray r)const {
-        Ray out(vec[1]*r.vec[2] - vec[2]*r.vec[1], out.vec[1] = vec[2]*r.vec[0] - vec[0]*r.vec[2], vec[0]*r.vec[1] - vec[1]*r.vec[0]);
-        return out;
+        return Ray(vec[1]*r.vec[2] - vec[2]*r.vec[1], vec[2]*r.vec[0] - vec[0]*r.vec[2], vec[0]*r.vec[1] - vec[1]*r.vec[0]);
 }
 
 Ray Ray::operator*(const double d)const {
@@ -91,7 +89,7 @@ void Ray::unit(){
          return;
 }
 
-void Ray::print(){
+void Ray::print() const{
    //std::cout << "(" << vec[0] <<", " << vec[1] << ", " << vec[2] << ")" << std::endl;
    std::cout << vec[0] << " " << vec[1] << " "  << vec[2] << std::endl;
 }
@@ -102,18 +100,30 @@ void Ray::Mag(){
    return;
 }
 
+Plane::Plane(Ray v1, Ray v2, Ray v3, Color c1, double k): col{c1}{
+   v[0] = Ray(v1[0]*k, v1[1]*k, v1[2]);
+   v[1] = Ray(v2[0]*k, v2[1]*k, v2[2]);
+   v[2] = Ray(v3[0]*k, v3[1]*k, v3[2]);
+   v[3] = v[1]+v[2]-v[0];
+   e1 = v[1] - v[0];
+   e2 = v[2] - v[0];
+   n = e1*e2;
+   n.unit();
+   assert (n/e1<3e-6);
+} 
+
 bool Plane::checkMeet(const Ray r){
    if(r/n == 0) return false;
-   double k =(v[0]/n)/(r/n); 
+   double k =(v[0]/n)/(r/n);
+   if(k<1 || k > 10000) return false;
    Ray pointOnPlane = r*k;
-
    assert ((pointOnPlane - v[0])/n < 1e-6);
    Ray pOP_v1 = pointOnPlane-v[0], pOP_v3=pointOnPlane-v[3];
-   if (k>=1&&pOP_v1/e1 >= 0 && pOP_v1/e2 >= 0 && pOP_v3/e1 <= 0 && pOP_v3/e2 <= 0) return true;
+   if (pOP_v1/e1 >= 0 && pOP_v1/e2 >= 0 && pOP_v3/e1 <= 0 && pOP_v3/e2 <= 0) return true;
    return false;
 }
 
-void Plane::print(){
+void Plane::print()const{
    std::cout << "Plane: " << std::endl;
    v[0].print();
    v[1].print();

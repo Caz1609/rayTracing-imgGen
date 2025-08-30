@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cmath>
+#include <cassert>
 
 class Img{
    public:
@@ -12,7 +13,6 @@ class Img{
       uint8_t *p = NULL;
       
       Img(int w1, int h1, int c1): h{h1}, w{w1}, c{c1}, s{(size_t)w1*h1*c1}{p = new uint8_t[s];} 
-      //void make_pimg(const char* fname);
 };
 
 class Color{
@@ -39,7 +39,7 @@ class Ray{
       double& operator[](const int);
       double operator/(const Ray r)const;
       void unit();
-      void print();
+      void print() const;
       void Mag();
 };
 
@@ -49,9 +49,11 @@ class Plane{
       Ray n, e1, e2;
       Color col;
 
-      Plane(Ray v1, Ray v2, Ray v3, Color c1):v{v1, v2, v3, v3+v2-v1}, e1{v2-v1}, e2{v3-v1}, col{c1}{n = (e1*e2); n.unit();} 
+      Plane(Ray v1, Ray v2, Ray v3, Color c1):v{v1, v2, v3, v3+v2-v1}, e1{v2-v1}, e2{v3-v1}, col{c1}{n = (e1*e2);n.unit();assert(n/e1<3e-6);} 
+      Plane(Ray v1, Ray v2, Ray v3, Ray v4, Color c1):v{v1, v2, v3, v4}, e1{v2-v1}, e2{v3-v1}, col{c1}{n = (e1*e2);n.unit();assert(n/e1<3e-6);} 
+      Plane(Ray v1, Ray v2, Ray v3, Color c1, double k); 
       bool checkMeet(const Ray r);
-      void print();
+      void print()const;
 };
 
 void test_plane_img(Img& i1, Plane& p);
