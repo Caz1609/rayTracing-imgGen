@@ -3,8 +3,11 @@
 #include "stb_image/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
+#include <cassert>
 
-void test_write_img(img& i1){
+#define FP 1
+
+void test_write_img(Img& i1){
     int y=0;
     float a, b;
     for(int i = 0; i < i1.h; i++){
@@ -29,31 +32,58 @@ void test_write_img(img& i1){
     return;
 }
 
-ray ray::operator+(const ray r)const {
-         ray out(vec[0]+r.vec[0], vec[1]+r.vec[1], vec[2]+r.vec[2]);
-         return out;
+void test_plane_img(Img& i1, Plane& p){
+   int t=0;
+   bool f;
+   for(int i = 0; i < i1.h; i++){
+      for(int j = 0; j < i1.w; j++){
+         if(f=p.checkMeet(Ray(i1.w/2-i, i1.h/2-j, FP))){
+            i1.p[t] = p.col[0];
+            i1.p[t+1] = p.col[1];
+            i1.p[t+2] = p.col[2];
+         }
+         t+=3;
+         if(i1.c==4)i1.p[t++] = 0;
+         if(f == 1){
+            std::cout << "i, j: " << i << ", " << j << std::endl;
+         }
+      }
+   }
+
+   stbi_write_png("1.png", i1.w, i1.h, i1.c, i1.p, i1.w*i1.c);
+   return;
 }
-      
-ray ray::operator-(const ray r)const {
-         ray out(vec[0]+r.vec[0], vec[1]+r.vec[1], vec[2]+r.vec[2]);
+
+Ray Ray::operator+(const Ray r)const {
+         Ray out(vec[0]+r.vec[0], vec[1]+r.vec[1], vec[2]+r.vec[2]);
          return out;
 }
 
-ray ray::operator*(const ray r)const {
-        ray out(vec[1]*r.vec[2] - vec[2]*r.vec[1], out.vec[1] = vec[2]*r.vec[0] - vec[0]*r.vec[2], vec[0]*r.vec[1] - vec[1]*r.vec[0]);
+Ray Ray::operator-(const Ray r)const {
+         Ray out(vec[0]-r.vec[0], vec[1]-r.vec[1], vec[2]-r.vec[2]);
+         return out;
+}
+
+Ray Ray::operator*(const Ray r)const {
+        Ray out(vec[1]*r.vec[2] - vec[2]*r.vec[1], out.vec[1] = vec[2]*r.vec[0] - vec[0]*r.vec[2], vec[0]*r.vec[1] - vec[1]*r.vec[0]);
         return out;
 }
 
-ray ray::operator*(const double d)const {
-         ray out(vec[0]*d, vec[1]*d, vec[2]*d);
+Ray Ray::operator*(const double d)const {
+         Ray out(vec[0]*d, vec[1]*d, vec[2]*d);
          return out;
 }
 
-double ray::operator/(const ray r)const {
-         return vec[0]*r.vec[0] + vec[1]*r.vec[1] + vec[2]*r.vec[0];  
+double Ray::operator/(const Ray r)const {
+         return vec[0]*r.vec[0] + vec[1]*r.vec[1] + vec[2]*r.vec[2];  
 }
 
-void ray::unit(){
+double& Ray::operator[](const int i){
+   if(i<0) return vec[(-i)%3];
+   return vec[i%3];
+}
+
+void Ray::unit(){
          vec[0] /= mag;   
          vec[1] /= mag;   
          vec[2] /= mag;
@@ -61,16 +91,36 @@ void ray::unit(){
          return;
 }
 
-bool plane::checkMeet(const ray r){
-         if(r/n == 0) return false;
-         ray vec_p1= r*((v[0]/n)/(r/n)), vec_p2;
-         vec_p2 = vec_p1-v[3];
-         vec_p1 = vec_p1-v[0];
-         if(vec_p1/e1 > 0 && vec_p1/e2 >0 && vec_p2/e1 <0 && vec_p2/e2 <0){
-            return true;
-         }
-         return false;
+void Ray::print(){
+   //std::cout << "(" << vec[0] <<", " << vec[1] << ", " << vec[2] << ")" << std::endl;
+   std::cout << vec[0] << " " << vec[1] << " "  << vec[2] << std::endl;
 }
 
+void Ray::Mag(){
+   mag = vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2];
+   mag = sqrt(mag);
+   return;
+}
 
+bool Plane::checkMeet(const Ray r){
+   if(r/n == 0) return false;
+   double k =(v[0]/n)/(r/n); 
+   Ray pointOnPlane = r*k;
 
+   assert ((pointOnPlane - v[0])/n < 1e-6);
+   Ray pOP_v1 = pointOnPlane-v[0], pOP_v3=pointOnPlane-v[3];
+   if (k>=1&&pOP_v1/e1 >= 0 && pOP_v1/e2 >= 0 && pOP_v3/e1 <= 0 && pOP_v3/e2 <= 0) return true;
+   return false;
+}
+
+void Plane::print(){
+   std::cout << "Plane: " << std::endl;
+   v[0].print();
+   v[1].print();
+   v[2].print();
+   v[3].print();
+   n.print();
+   e1.print();
+   e2.print();
+   std::cout << std::endl;
+}
