@@ -3,7 +3,7 @@
 #include "funcs.h"
 
 int main(){
-   Plane p(Ray(42, 6, 10), Ray(20, 6, 11), Ray(42, 16, 12), Color(0, 255, 0), 10);
-   Img i1(1000, 1000, 3);
-   test_plane_img(i1, p);
+   Img i1(4000, 3000, 3);
+   Sphere s1(Ray(2000, 1500, 5000), 2000);
+   test_sphere_img(i1, s1);
 }

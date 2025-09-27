@@ -4,52 +4,74 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
 
-#define FP 10
+#define FP 5000
 
 void test_write_img(Img& i1){
     int y=0;
     float a, b;
-    for(int i = 0; i < i1.h; i++){
-       for(int j = 0; j < i1.w; j++){
+    for(int i = 0; i < i1.height(); i++){
+       for(int j = 0; j < i1.width(); j++){
             a = i;
-            a /= i1.h;
+            a /= i1.height();
             a *= 255;
             b = j;
-            b /= i1.w;
+            b /= i1.width();
             b *= 255;
-            i1.p[y]=a;
-            i1.p[y+1]=b;
-            i1.p[y+2]=255-a;
-            if(i1.c==4) {
-                i1.p[y+3]=0;
+            i1.start()[y]=a;
+            i1.start()[y+1]=b;
+            i1.start()[y+2]=255-a;
+            if(i1.chan()==4) {
+                i1.start()[y+3]=0;
                 y++;
             }
             y +=3;
        } 
     }
-    stbi_write_png("1.png", i1.w, i1.h, i1.c, i1.p, i1.w*i1.c);
+    stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
     return;
 }
 
 void test_plane_img(Img& i1, Plane& p){
    int t=0;
    bool f;
-   for(int i = 0; i < i1.h; i++){
-      for(int j = 0; j < i1.w; j++){
-         if(f=p.checkMeet(Ray((double)j - (double)i1.w/2, (double)i1.h/2-(double)i, FP))){
-            i1.p[t] = p.col[0];
-            i1.p[t+1] = p.col[1];
-            i1.p[t+2] = p.col[2];
+   for(int i = 0; i < i1.height(); i++){
+      for(int j = 0; j < i1.width(); j++){
+         if(f=p.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
+            i1.start()[t] = 0;
+            i1.start()[t+1] = 255;
+            i1.start()[t+2] = 255;
          }
          t+=3;
-         if(i1.c==4)i1.p[t++] = 0;
+         if(i1.chan()==4)i1.start()[t++] = 0;
          if(f == 1){
             std::cout << "i, j: " << i << ", " << j << std::endl;
          }
       }
    }
 
-   stbi_write_png("1.png", i1.w, i1.h, i1.c, i1.p, i1.w*i1.c);
+   stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
+   return;
+}
+
+void test_sphere_img(Img& i1, Sphere& s){
+   int t=0;
+   bool f;
+   for(int i = 0; i < i1.height(); i++){
+      for(int j = 0; j < i1.width(); j++){
+         if(f=s.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
+            i1.start()[t] = 0;
+            i1.start()[t+1] = 255;
+            i1.start()[t+2] = 255;
+         }
+         t+=3;
+         if(i1.chan()==4)i1.start()[t++] = 0;
+         if(f == 1){
+            std::cout << "i, j: " << i << ", " << j << std::endl;
+         }
+      }
+   }
+
+   stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
    return;
 }
 
@@ -82,11 +104,12 @@ double& Ray::operator[](const int i){
 }
 
 void Ray::unit(){
-         vec[0] /= mag;   
-         vec[1] /= mag;   
-         vec[2] /= mag;
-         mag = 1;
-         return;
+   Ray::Mag();       
+   vec[0] /= mag;   
+   vec[1] /= mag;   
+   vec[2] /= mag;
+   mag = 1;
+   return;
 }
 
 void Ray::print() const{
@@ -94,13 +117,13 @@ void Ray::print() const{
    std::cout << vec[0] << " " << vec[1] << " "  << vec[2] << std::endl;
 }
 
-void Ray::Mag(){
+double Ray::Mag(){
    mag = vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2];
    mag = sqrt(mag);
-   return;
+   return mag;
 }
 
-Plane::Plane(Ray v1, Ray v2, Ray v3, Color c1, double k): col{c1}{
+Plane::Plane(Ray v1, Ray v2, Ray v3, double k){
    v[0] = Ray(v1[0]*k, v1[1]*k, v1[2]);
    v[1] = Ray(v2[0]*k, v2[1]*k, v2[2]);
    v[2] = Ray(v3[0]*k, v3[1]*k, v3[2]);
@@ -133,4 +156,14 @@ void Plane::print()const{
    e1.print();
    e2.print();
    std::cout << std::endl;
+}
+
+bool Sphere::checkMeet(const Ray r){
+   Ray v = r;
+   v.unit();
+   double dot = v/center;
+   if(dot*dot >= (center/center - radius*radius) && dot > 0){
+      return true;
+   }
+   return false;
 }
