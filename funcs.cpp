@@ -40,7 +40,7 @@ void test_plane_img(Img& i1, Plane& p){
             i1.start()[t++] = p.green();
             i1.start()[t++] = p.blue();
             if(i1.chan()==4)i1.start()[t++] = p.alpha();
-            std::cout << "i, j: " << i << ", " << j << std::endl;
+            // std::cout << "i, j: " << i << ", " << j << std::endl;
          }
          else{
             i1.start()[t++] = 0;  
@@ -49,6 +49,7 @@ void test_plane_img(Img& i1, Plane& p){
             if(i1.chan()==4)i1.start()[t++] = 255;
          }
       }
+      if(i%1000== 0) std::cout << "i: " << i << "/" << i1.height() << std::endl;
    }
 
    stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
@@ -64,7 +65,7 @@ void test_sphere_img(Img& i1, Sphere& s){
             i1.start()[t++] = s.green();
             i1.start()[t++] = s.blue();
             if(i1.chan()==4)i1.start()[t++] = s.alpha();
-            std::cout << "i, j: " << i << ", " << j << std::endl;
+            // std::cout << "i, j: " << i << ", " << j << std::endl;
          }
          else{
             i1.start()[t++] = 0;  
@@ -73,6 +74,7 @@ void test_sphere_img(Img& i1, Sphere& s){
             if(i1.chan()==4)i1.start()[t++] = 255;
          }
       }
+      if(i%1000== 0) std::cout << "i: " << i << "/" << i1.height() << std::endl;
    }
 
    stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
@@ -93,7 +95,7 @@ void test_scenery_img(Img& i1, Scenery& v){
             i1.start()[t++] = c.green();
             i1.start()[t++] = c.blue();
             if(i1.chan()==4)i1.start()[t++] = c.alpha();
-            std::cout << "i, j: " << i << ", " << j << std::endl;
+            // std::cout << "i, j: " << i << ", " << j << std::endl;
          }
          else{
             i1.start()[t++] = 0;  
@@ -102,6 +104,7 @@ void test_scenery_img(Img& i1, Scenery& v){
             if(i1.chan()==4)i1.start()[t++] = 255;
          }
       }
+      if(i%1000== 0) std::cout << "i: " << i << "/" << i1.height() << std::endl;
    }
 
    stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
@@ -218,6 +221,7 @@ bool Sphere::checkMeet(const Ray r, double& mul){
 
 bool Scenery::checkMeet(const Ray r, Color& c){
    c = Color(0, 0, 0);
+   Ray cen(0, 0, 0);
    double min = 1e15, m;
    bool f=false;
    for(int i = 0; i < spheres.size(); i++){
@@ -225,10 +229,32 @@ bool Scenery::checkMeet(const Ray r, Color& c){
          f=true; 
          if(m < min){
             c = spheres[i].color();
+            cen = spheres[i].cent();
             min = m;
          }
       }
    }
+
+   if(min != 1e15){
+         Ray temp = r, temp2;
+         temp.unit();
+         temp = temp * min;
+         temp = temp - cen;
+         temp.unit();
+         double d=0, x;
+
+         for(int i = 0; i < lights.size(); i++){
+            temp2 = lights[i].position() - cen;
+            x = temp2/temp;
+            x /= temp2.Mag();
+            if(x > 0){
+               d+= lights[i].intensity() * x;
+            }
+         }
+
+         c = c*d;
+   }
+
    return f;
 }
 

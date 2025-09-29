@@ -49,6 +49,8 @@ class Color{
       uint8_t green(){return g;}
       uint8_t blue(){return b;}
       uint8_t alpha(){return t;}
+
+      Color operator*(double k){return Color(r*k, g*k, b*k, t);}
 };
 
 class Plane{
@@ -78,6 +80,7 @@ class Sphere{
       Sphere(Ray v1, double r, Color c):center{v1}, radius{r}, col{c}{}
       bool checkMeet(const Ray r);
       bool checkMeet(const Ray r, double& mul);
+      Ray cent(){return center;}
       Color color(){return col;}
       uint8_t red(){return col.red();}
       uint8_t green(){return col.green();}
@@ -85,13 +88,25 @@ class Sphere{
       uint8_t alpha(){return col.alpha();}
 };
 
+class Light{
+   private:
+      Ray pos;
+      double i;
+   public:
+      Light(Ray r, double intensity=0.5):pos{r}, i{intensity}{}
+      double intensity(){return i;}
+      Ray position(){return pos;}
+};
+
 class Scenery{
    private:
       std::vector<Sphere> spheres;
+      std::vector<Light> lights;
    public:
       Scenery(int n){spheres.reserve(n);}
       Scenery(Sphere s):spheres{s}{}
       void Insert(Sphere s){spheres.push_back(s);return;}
+      void Insert(Light l){lights.push_back(l);return;}
       bool checkMeet(const Ray r, Color& c);
 };
 

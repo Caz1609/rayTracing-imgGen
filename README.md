@@ -7,7 +7,8 @@ Project to write an image generator for a collection of objects placed in space 
 - [x] Generate image with plane parallel to image plane
 - [x] Generate image with sphere
 - [x] Generate image with multiple spheres
-- [ ] Add the ability to use a light source instead of sticking to assuming the objects to be well lit.
+- [x] Add the ability to use a light source instead of sticking to assuming the objects to be well lit.
+- [ ] Improve shading from light sources.
 - [ ] Generate image with single plane not parallel to image plane
 - [ ] Generate image with multiple planes
 - [ ] Add the ability to use 3D object
