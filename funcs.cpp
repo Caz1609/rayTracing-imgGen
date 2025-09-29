@@ -33,18 +33,20 @@ void test_write_img(Img& i1){
 
 void test_plane_img(Img& i1, Plane& p){
    int t=0;
-   bool f;
    for(int i = 0; i < i1.height(); i++){
       for(int j = 0; j < i1.width(); j++){
-         if(f=p.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
-            i1.start()[t] = 0;
-            i1.start()[t+1] = 255;
-            i1.start()[t+2] = 255;
-         }
-         t+=3;
-         if(i1.chan()==4)i1.start()[t++] = 0;
-         if(f == 1){
+         if(p.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
+            i1.start()[t++] = p.red();
+            i1.start()[t++] = p.green();
+            i1.start()[t++] = p.blue();
+            if(i1.chan()==4)i1.start()[t++] = p.alpha();
             std::cout << "i, j: " << i << ", " << j << std::endl;
+         }
+         else{
+            i1.start()[t++] = 0;  
+            i1.start()[t++] = 0;
+            i1.start()[t++] = 0;
+            if(i1.chan()==4)i1.start()[t++] = 255;
          }
       }
    }
@@ -55,18 +57,49 @@ void test_plane_img(Img& i1, Plane& p){
 
 void test_sphere_img(Img& i1, Sphere& s){
    int t=0;
+   for(int i = 0; i < i1.height(); i++){
+      for(int j = 0; j < i1.width(); j++){
+         if(s.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
+            i1.start()[t++] = s.red();
+            i1.start()[t++] = s.green();
+            i1.start()[t++] = s.blue();
+            if(i1.chan()==4)i1.start()[t++] = s.alpha();
+            std::cout << "i, j: " << i << ", " << j << std::endl;
+         }
+         else{
+            i1.start()[t++] = 0;  
+            i1.start()[t++] = 0;
+            i1.start()[t++] = 0;
+            if(i1.chan()==4)i1.start()[t++] = 255;
+         }
+      }
+   }
+
+   stbi_write_png("1.png", i1.width(), i1.height(), i1.chan(), i1.start(), i1.width()*i1.chan());
+   return;
+}
+
+void test_scenery_img(Img& i1, Scenery& v){
+   int t=0;
+   Ray temp;
+   Color c;
    bool f;
    for(int i = 0; i < i1.height(); i++){
       for(int j = 0; j < i1.width(); j++){
-         if(f=s.checkMeet(Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP))){
-            i1.start()[t] = 0;
-            i1.start()[t+1] = 255;
-            i1.start()[t+2] = 255;
-         }
-         t+=3;
-         if(i1.chan()==4)i1.start()[t++] = 0;
-         if(f == 1){
+         temp = Ray((double)j - (double)i1.width()/2, (double)i1.height()/2-(double)i, FP);
+         f = v.checkMeet(temp, c);
+         if(f){   
+            i1.start()[t++] = c.red();
+            i1.start()[t++] = c.green();
+            i1.start()[t++] = c.blue();
+            if(i1.chan()==4)i1.start()[t++] = c.alpha();
             std::cout << "i, j: " << i << ", " << j << std::endl;
+         }
+         else{
+            i1.start()[t++] = 0;  
+            i1.start()[t++] = 0;
+            i1.start()[t++] = 0;
+            if(i1.chan()==4)i1.start()[t++] = 255;
          }
       }
    }
@@ -86,7 +119,7 @@ Ray Ray::operator-(const Ray r)const {
 }
 
 Ray Ray::operator*(const Ray r)const {
-        return Ray(vec[1]*r.vec[2] - vec[2]*r.vec[1], vec[2]*r.vec[0] - vec[0]*r.vec[2], vec[0]*r.vec[1] - vec[1]*r.vec[0]);
+        return Ray(vec[1]*r.vec[2] - vec[2]*r.vec[1], vec[0]*r.vec[2] - vec[2]*r.vec[0], vec[1]*r.vec[0] - vec[0]*r.vec[/*  */1]);
 }
 
 Ray Ray::operator*(const double d)const {
@@ -162,8 +195,40 @@ bool Sphere::checkMeet(const Ray r){
    Ray v = r;
    v.unit();
    double dot = v/center;
-   if(dot*dot >= (center/center - radius*radius) && dot > 0){
+   if(dot >= 0 && dot*dot >= center/center - radius*radius){
       return true;
    }
    return false;
 }
+
+bool Sphere::checkMeet(const Ray r, double& mul){
+   mul = 0;
+   Ray v = r;
+   v.unit();
+   double dot = v/center, del;
+   del = dot*dot - center/center + radius*radius; 
+   if(del >= 0){
+      del = sqrt(del);
+      mul = dot - del;
+      if(mul <= 0) mul += del + del;
+      return true;
+   }
+   return false;
+}
+
+bool Scenery::checkMeet(const Ray r, Color& c){
+   c = Color(0, 0, 0);
+   double min = 1e15, m;
+   bool f=false;
+   for(int i = 0; i < spheres.size(); i++){
+      if(spheres[i].checkMeet(r, m)) {
+         f=true; 
+         if(m < min){
+            c = spheres[i].color();
+            min = m;
+         }
+      }
+   }
+   return f;
+}
+
